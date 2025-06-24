@@ -107,3 +107,5 @@ async function sendMessage() {
 userInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
 });
+
+window.sendMessage = sendMessage;
