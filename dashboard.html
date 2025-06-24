@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Key Dashboard - ANAS GPT</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    .inactive {
+      background-color: #fdd;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🗝️ API Key Dashboard</h1>
+    <p>Senarai Key dalam Firebase</p>
+  </header>
+
+  <main>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>API Key</th>
+          <th>Status</th>
+          <th>Fail Count</th>
+          <th>Tukar</th>
+        </tr>
+      </thead>
+      <tbody id="key-table-body">
+        <!-- Diisi secara automatik -->
+      </tbody>
+    </table>
+  </main>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>
