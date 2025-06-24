@@ -1,3 +1,4 @@
+// script.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import {
   getFirestore,
@@ -8,15 +9,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { firebaseConfig } from "./config.js";
 
-// Firebase Init
+// 🔥 Inisialisasi Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// UI
+// 💬 Elemen UI
 const chatContainer = document.getElementById("chat-container");
 const userInput = document.getElementById("user-input");
 
-// Tambah mesej ke skrin
+// Tambah mesej ke UI
 function addMessage(text, sender) {
   const msg = document.createElement("div");
   msg.className = `message ${sender}`;
@@ -25,7 +26,7 @@ function addMessage(text, sender) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Ambil key yang aktif & kurang error
+// Dapatkan semua API key aktif dan belum banyak gagal
 async function fetchActiveKeys() {
   const snapshot = await getDocs(collection(db, "api_keys"));
   const keys = [];
@@ -38,15 +39,15 @@ async function fetchActiveKeys() {
   return keys;
 }
 
-// Naikkan fail count dalam Firestore
+// Naikkan failCount jika key gagal digunakan
 async function incrementFailCount(docId) {
   const keyRef = doc(db, "api_keys", docId);
   await updateDoc(keyRef, {
-    failCount: window.incrementCount ? window.incrementCount + 1 : 1
+    failCount: Math.floor(Math.random() * 2) + 1 // antara 1–2
   });
 }
 
-// Hantar mesej
+// Fungsi hantar mesej ke AI
 async function sendMessage() {
   const input = userInput.value.trim();
   if (!input) return;
@@ -87,23 +88,22 @@ async function sendMessage() {
         throw new Error("Invalid response from AI.");
       }
 
-      chatContainer.lastChild.remove(); // remove Typing...
+      chatContainer.lastChild.remove(); // buang "Typing..."
       const botReply = data.choices[0].message.content || "❌ AI tak beri respon.";
       addMessage(botReply, "bot");
-      return; // keluar loop kalau berjaya
+      return; // keluar loop bila berjaya
 
     } catch (err) {
       console.warn(`❌ Gagal guna key: ${value}`);
-      await incrementFailCount(id); // naikkan fail count
+      await incrementFailCount(id);
     }
   }
 
-  // Semua key gagal
   chatContainer.lastChild.remove();
-  addMessage("❌ Semua key gagal digunakan. Cuba semula nanti.", "bot");
+  addMessage("❌ Semua key gagal digunakan. Cuba lagi nanti.", "bot");
 }
 
-// Trigger bila tekan Enter
+// Bila tekan Enter, hantar mesej
 userInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
-}); 
+});
