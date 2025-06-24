@@ -16,7 +16,7 @@
   <main>
     <div id="chat-container"></div>
     <div id="input-area">
-      <input type="text" id="user-input" placeholder="Type your question..." />
+      <input type="text" id="user-input" placeholder="Type your question..." onkeydown="if(event.key==='Enter') sendMessage()" />
       <button onclick="sendMessage()">➤</button>
     </div>
   </main>
