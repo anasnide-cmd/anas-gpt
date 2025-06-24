@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ANAS GPT - Smart AI Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>ANAS GPT</h1>
+    <p>Smart AI Assistant powered by OpenRouter</p>
+  </header>  <main>
+    <div id="chat-container"></div>
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Ask me anything..." />
+      <button onclick="sendMessage()">➤</button>
+    </div>
+  </main>  <footer>© 2025 ANAS GPT. All rights reserved.</footer>  <script>
+    const API_KEY = "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";
+    const chatContainer = document.getElementById("chat-container");
+    const userInput = document.getElementById("user-input");
+
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = `message ${sender}`;
+      msg.innerText = text;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = userInput.value.trim();
+      if (!input) return;
+      addMessage(input, "user");
+      userInput.value = "";
+
+      addMessage("Typing...", "bot");
+
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "deepseek/deepseek-r1-0528-qwen3-8b:free",
+            messages: [
+              {
+                role: "user",
+                content: input
+              }
+            ]
+          }),
+        });
+
+        const data = await res.json();
+        const botReply = data.choices?.[0]?.message?.content || "Error: No response.";
+        chatContainer.lastChild.remove(); // Remove "Typing..."
+        addMessage(botReply, "bot");
+      } catch (error) {
+        chatContainer.lastChild.remove();
+        addMessage("Error: Failed to fetch response.", "bot");
+      }
+    }
+  </script></body>
+</html>
