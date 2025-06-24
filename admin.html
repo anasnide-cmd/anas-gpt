@@ -2,22 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ANAS GPT - Admin Panel</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - ANAS GPT</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="login-area">
-  <button id="login-btn">Login dengan Google</button>
-</div>
+  <header>
+    <h1>🔐 ANAS GPT - Admin Panel</h1>
+    <p>Tambah API Key OpenRouter ke Firebase</p>
+  </header>
 
-<h1>ANAS GPT 🔐 Admin Panel</h1>
-<div id="key-list"></div>
-  
-
-
-  <h2>Tambah API Key</h2>
-  <input type="text" id="new-key" placeholder="sk-or-..." />
-  <button onclick="addApiKey()">Tambah Key</button>
+  <main>
+    <div id="admin-form">
+      <input type="text" id="api-key-input" placeholder="Masukkan API Key (cth: sk-or-xxxxx...)" />
+      <button onclick="addKey()">Tambah Key</button>
+      <p id="status"></p>
+    </div>
+  </main>
 
   <script type="module" src="admin.js"></script>
 </body>
