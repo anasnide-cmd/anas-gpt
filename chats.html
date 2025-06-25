@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat History - ANAS GPT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="chats.js" defer></script>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00ffc3;
+    }
+
+    .new-chat-btn {
+      display: block;
+      margin: 0 auto 30px;
+      padding: 10px 20px;
+      background: #00ffc3;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .chat-history-list {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .chat-item {
+      padding: 12px 16px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    .chat-item:hover {
+      background: #222;
+    }
+
+    .chat-item span {
+      cursor: pointer;
+    }
+
+    .actions button {
+      background: transparent;
+      color: #fff;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .actions button:hover {
+      color: #ff4c4c;
+    }
+  </style>
+  
+</head>
+
+<body>
+  <h1>🗂️ Your Chats</h1>
+  <button class="new-chat-btn" onclick="startNewChat()">➕ New Chat</button>
+  <div id="chat-list" class="chat-history-list"></div>
+</body>
+</html>
