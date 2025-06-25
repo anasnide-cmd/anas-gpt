@@ -1,4 +1,5 @@
- // Import Firebase modules
+
+// Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import {
   getFirestore,
@@ -165,11 +166,13 @@ async function sendMessage() {
   const input = userInput.value.trim();
   if (!input || userInput.disabled) return;
 
-  const selectedModel = modelSelect.value;
-  if (!selectedModel) {
-    typingIndicator.style.display = "none";
-    addMessage("❗ Please select a model first.", "bot");
-    return;
+  let selectedModel = modelSelect.value;
+
+  // ✅ Auto fallback to first model if none selected
+  if (!selectedModel && modelSelect.options.length > 0) {
+    selectedModel = modelSelect.options[0].value;
+    modelSelect.value = selectedModel;
+    console.log("✅ Auto-selected model:", selectedModel);
   }
 
   addMessage(input, "user");
@@ -249,3 +252,4 @@ window.toggleSidebar = function () {
   const isOpen = sidebar.classList.toggle("active");
   overlay.style.display = isOpen ? "block" : "none";
 };
+ 
