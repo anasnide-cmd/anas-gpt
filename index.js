@@ -18,3 +18,18 @@ exports.resetFailCounts = functions.pubsub
     console.log("✅ Semua failCount telah direset.");
     return null;
   });
+  
+  menuToggle.addEventListener("click", (e) => {
+  e.stopPropagation(); // elak event bubbling
+  setTimeout(() => {
+    navMenu.classList.toggle("show");
+    navMenu.classList.toggle("hidden");
+  }, 10);
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#nav-menu") && !e.target.closest("#menu-toggle")) {
+    navMenu.classList.add("hidden");
+    navMenu.classList.remove("show");
+  }
+});
