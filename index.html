@@ -3,121 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ANAS GPT - Smartest AI by Anas Nidir</title>
+  <title>ANAS GPT</title>
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script type="module" src="script.js" defer></script>
 </head>
 <body>
 
-<!-- Header with toggle -->
-<!-- Header with login -->
-<header class="main-header">
-  <div class="header-top" style="display: flex; justify-content: space-between; align-items: center;">
-    <h1>ANAS GPT</h1>
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <button id="login-btn" class="login-btn">Login</button>
-      <button id="logout-btn" style="display: none;" class="logout-btn">Logout</button>
-      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-    </div>
-  </div>
-</header>
+  <!-- Notis Model Auto-Selected -->
+  <div id="model-notice" class="model-notice"></div>
 
-<!-- Sidebar Menu -->
-<nav class="sidebar" id="sidebar">
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-left">
+      
+      <button id="menu-toggle" class="menu-toggle">☰</button>
+      <h1 id="model-button">
+        
+        <span style="font-size: 1.2rem;">ANAS GPT</span> <span id="dropdown-icon">▼</span><br>
+        <small id="model-name"></small>
+      </h1>
+    </div>
+    <div>
+      <button id="login-btn" class="login-btn">Login</button>
+      <button id="logout-btn" class="logout-btn hidden">Logout</button>
+    </div>
+  </header>
+
+  <!-- Sidebar Nav -->
+<nav id="nav-menu" class="nav-menu hidden">
   <ul>
-    <li><strong>Ask anything</strong></li>
-    <li><button onclick="document.getElementById('login-btn').click()">Login with Google</button></li>
-    <li><button onclick="document.getElementById('logout-btn').click()" style="display:none;">Logout</button></li>
-    <li><a href="#chat">Chat</a></li>
-    <li><a href="#about">About</a></li>
+    <li><a href="index.html">🏠 Home</a></li>
+    <li><a href="chats.html">📂 Chat History</a></li>
+    <li><a href="admin.html">🛠️ Admin</a></li>
+    <li><a href="about.html">ℹ️ About</a></li>
+    <li><a href="contact.html">📧 Contact</a></li>
   </ul>
 </nav>
+  
+ 
 
-<!-- Overlay -->
-<div id="sidebar-overlay" onclick="toggleSidebar()" style="display: none;"></div>
+  <!-- Model Dropdown -->
+  <div id="model-menu" class="dropdown-menu hidden"></div>
+  <input type="hidden" id="model" />
 
-<main>
-  <div id="login-notice" class="notice" style="display: none; padding: 10px; background: #222; color: #fff; margin-top: 10px; text-align: center; border-radius: 6px;">
-    🔐 Please <strong>Login with Google</strong> to use ANAS GPT.
-  </div>
+  <!-- Chat Area -->
+  <main>
+    <div id="chat-container"></div>
+    <div id="typing-indicator" class="hidden">Typing...</div>
 
-  <div id="model-dropdown-container" style="position: relative;">
-    <button onclick="toggleModelMenu()" id="model-button">
-      🤖 Select Model
-    </button>
-    <div id="model-menu" style="display: none;" class="dropdown-menu"></div>
-    <input type="hidden" id="model" />
-  </div>
+    <!-- Clear Chat Button -->
+    <button id="clear-chat-btn" class="logout-btn">🗑️ Clear Chat</button>
+    <!-- Button to open chat history -->
 
-  <div id="chat-container"></div>
-  <div id="typing-indicator" class="bot message" style="display: none;">Anas GPT is typing...</div>
 
-  <div id="input-area">
-    <input type="text" id="user-input" placeholder="Type your question..." onkeydown="if(event.key==='Enter') sendMessage()" />
-    <button onclick="sendMessage()">➤</button>
-  </div>
-</main>
-
-<footer>
-  © 2025 ANAS GPT by Anas Nidir. All Rights Reserved.
-</footer>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-  import { firebaseConfig } from "./config.js";
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  const modelMenu = document.getElementById("model-menu");
-  const modelInput = document.getElementById("model");
-  const modelButton = document.getElementById("model-button");
-
-  window.toggleModelMenu = function () {
-    modelMenu.style.display = modelMenu.style.display === "block" ? "none" : "block";
-  };
-
-  async function loadModels() {
-    const snapshot = await getDocs(collection(db, "models"));
-    modelMenu.innerHTML = "";
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.active) {
-        const item = document.createElement("div");
-        item.textContent = data.name + (data.selected ? " ⭐" : "");
-        item.onclick = () => {
-          modelInput.value = data.endpoint;
-          modelButton.innerHTML = `🤖 ${data.name}`;
-          modelMenu.style.display = "none";
-        };
-        modelMenu.appendChild(item);
-      }
-    });
-  }
-
-  loadModels();
-
-  document.addEventListener("click", (e) => {
-    const dropdown = document.getElementById("model-menu");
-    const button = document.getElementById("model-button");
-    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-      dropdown.style.display = "none";
-    }
-  });
-</script>
-
-<script>
-  window.toggleSidebar = function () {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("sidebar-overlay");
-    const isOpen = sidebar.classList.toggle("active");
-    overlay.style.display = isOpen ? "block" : "none";
-  };
-</script>
-
-<script type="module" src="script.js"></script>
+    <!-- Input Area -->
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Ask something..." disabled />
+      <button id="send-btn">Send</button>
+    </div>
+  </main>
 
 </body>
 </html>
