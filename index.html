@@ -10,10 +10,15 @@
 <body>
 
 <!-- Header with toggle -->
+<!-- Header with login -->
 <header class="main-header">
-  <div class="header-top">
+  <div class="header-top" style="display: flex; justify-content: space-between; align-items: center;">
     <h1>ANAS GPT</h1>
-    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button id="login-btn" class="login-btn">Login</button>
+      <button id="logout-btn" style="display: none;" class="logout-btn">Logout</button>
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    </div>
   </div>
 </header>
 
@@ -21,8 +26,8 @@
 <nav class="sidebar" id="sidebar">
   <ul>
     <li><strong>Ask anything</strong></li>
-    <li><button id="login-btn">Login with Google</button></li>
-    <li><button id="logout-btn" style="display:none;">Logout</button></li>
+    <li><button onclick="document.getElementById('login-btn').click()">Login with Google</button></li>
+    <li><button onclick="document.getElementById('logout-btn').click()" style="display:none;">Logout</button></li>
     <li><a href="#chat">Chat</a></li>
     <li><a href="#about">About</a></li>
   </ul>
@@ -32,24 +37,17 @@
 <div id="sidebar-overlay" onclick="toggleSidebar()" style="display: none;"></div>
 
 <main>
-  
-  <div id="model-dropdown-container" style="position: relative;">
-  <button onclick="toggleModelMenu()" id="model-button">
-    🤖 Select Model
-  </button>
-  <div id="model-menu" style="display: none;" class="dropdown-menu"></div>
-
-  <!-- hidden input untuk simpan pilihan -->
-  <input type="hidden" id="model" />
-</div>
-
-<!--  <div id="model-selector">
-    <label for="model">Model:</label>
-    <select id="model">
-      <option disabled selected>Loading models...</option>
-    </select>
+  <div id="login-notice" class="notice" style="display: none; padding: 10px; background: #222; color: #fff; margin-top: 10px; text-align: center; border-radius: 6px;">
+    🔐 Please <strong>Login with Google</strong> to use ANAS GPT.
   </div>
--->
+
+  <div id="model-dropdown-container" style="position: relative;">
+    <button onclick="toggleModelMenu()" id="model-button">
+      🤖 Select Model
+    </button>
+    <div id="model-menu" style="display: none;" class="dropdown-menu"></div>
+    <input type="hidden" id="model" />
+  </div>
 
   <div id="chat-container"></div>
   <div id="typing-indicator" class="bot message" style="display: none;">Anas GPT is typing...</div>
@@ -64,82 +62,52 @@
   © 2025 ANAS GPT by Anas Nidir. All Rights Reserved.
 </footer>
 
-<!-- Firebase Script: Dynamic Model Loader -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-  import {
-    getFirestore, collection, getDocs
-  } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
   import { firebaseConfig } from "./config.js";
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  const selector = document.getElementById("model");
-  selector.innerHTML = ""; // Kosongkan dropdown dulu
+  const modelMenu = document.getElementById("model-menu");
+  const modelInput = document.getElementById("model");
+  const modelButton = document.getElementById("model-button");
 
-  const snapshot = await getDocs(collection(db, "models"));
-  let found = false;
+  window.toggleModelMenu = function () {
+    modelMenu.style.display = modelMenu.style.display === "block" ? "none" : "block";
+  };
 
-  snapshot.forEach((doc) => {
-    const data = doc.data();
-    if (data.active) {
-      const option = document.createElement("option");
-      option.value = data.endpoint;
-      option.text = data.name + (data.selected ? " ⭐" : "");
-      selector.appendChild(option);
-      found = true;
-    }
-  });
+  async function loadModels() {
+    const snapshot = await getDocs(collection(db, "models"));
+    modelMenu.innerHTML = "";
 
-  if (!found) {
-    const option = document.createElement("option");
-    option.disabled = true;
-    option.selected = true;
-    option.text = "❌ No model available";
-    selector.appendChild(option);
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.active) {
+        const item = document.createElement("div");
+        item.textContent = data.name + (data.selected ? " ⭐" : "");
+        item.onclick = () => {
+          modelInput.value = data.endpoint;
+          modelButton.innerHTML = `🤖 ${data.name}`;
+          modelMenu.style.display = "none";
+        };
+        modelMenu.appendChild(item);
+      }
+    });
   }
-</script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-import { firebaseConfig } from "./config.js";
+  loadModels();
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const modelMenu = document.getElementById("model-menu");
-const modelInput = document.getElementById("model");
-const modelButton = document.getElementById("model-button");
-
-window.toggleModelMenu = function () {
-  modelMenu.style.display = modelMenu.style.display === "block" ? "none" : "block";
-};
-
-// Load model dari Firestore
-async function loadModels() {
-  const snapshot = await getDocs(collection(db, "models"));
-  modelMenu.innerHTML = ""; // Kosongkan dulu
-
-  snapshot.forEach((doc) => {
-    const data = doc.data();
-    if (data.active) {
-      const item = document.createElement("div");
-      item.textContent = data.name + (data.selected ? " ⭐" : "");
-      item.onclick = () => {
-        modelInput.value = data.endpoint;
-        modelButton.innerHTML = `🤖 ${data.name}`;
-        modelMenu.style.display = "none";
-      };
-      modelMenu.appendChild(item);
+  document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("model-menu");
+    const button = document.getElementById("model-button");
+    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+      dropdown.style.display = "none";
     }
   });
-}
-
-loadModels();
 </script>
-<!-- Sidebar Script -->
+
 <script>
   window.toggleSidebar = function () {
     const sidebar = document.getElementById("sidebar");
@@ -149,7 +117,6 @@ loadModels();
   };
 </script>
 
-<!-- Main Logic Script -->
 <script type="module" src="script.js"></script>
 
 </body>
