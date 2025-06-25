@@ -3,27 +3,154 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  
   <title>ANAS GPT - Smartest AI by Anas Nidir</title>
-  
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <header>
+
+<!-- Header with toggle -->
+<header class="main-header">
+  <div class="header-top">
     <h1>ANAS GPT</h1>
-  </header>
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  </div>
+</header>
 
-  <main>
-    <div id="chat-container"></div>
-    <div id="input-area">
-      <input type="text" id="user-input" placeholder="Type your question..." onkeydown="if(event.key==='Enter') sendMessage()" />
-      <button onclick="sendMessage()">➤</button>
-    </div>
-  </main>
+<!-- Sidebar Menu -->
+<nav class="sidebar" id="sidebar">
+  <ul>
+    <li><strong>Ask anything</strong></li>
+    <li><button id="login-btn">Login with Google</button></li>
+    <li><button id="logout-btn" style="display:none;">Logout</button></li>
+    <li><a href="#chat">Chat</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+</nav>
 
-  <footer>© 2025 ANAS GPT</footer>
+<!-- Overlay -->
+<div id="sidebar-overlay" onclick="toggleSidebar()" style="display: none;"></div>
 
-  <!-- Chatbot Logic -->
-  <script type="module" src="script.js"></script>
+<main>
+  
+  <div id="model-dropdown-container" style="position: relative;">
+  <button onclick="toggleModelMenu()" id="model-button">
+    🤖 Select Model
+  </button>
+  <div id="model-menu" style="display: none;" class="dropdown-menu"></div>
+
+  <!-- hidden input untuk simpan pilihan -->
+  <input type="hidden" id="model" />
+</div>
+
+<!--  <div id="model-selector">
+    <label for="model">Model:</label>
+    <select id="model">
+      <option disabled selected>Loading models...</option>
+    </select>
+  </div>
+-->
+
+  <div id="chat-container"></div>
+  <div id="typing-indicator" class="bot message" style="display: none;">Anas GPT is typing...</div>
+
+  <div id="input-area">
+    <input type="text" id="user-input" placeholder="Type your question..." onkeydown="if(event.key==='Enter') sendMessage()" />
+    <button onclick="sendMessage()">➤</button>
+  </div>
+</main>
+
+<footer>
+  © 2025 ANAS GPT by Anas Nidir. All Rights Reserved.
+</footer>
+
+<!-- Firebase Script: Dynamic Model Loader -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+  import {
+    getFirestore, collection, getDocs
+  } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+  import { firebaseConfig } from "./config.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const selector = document.getElementById("model");
+  selector.innerHTML = ""; // Kosongkan dropdown dulu
+
+  const snapshot = await getDocs(collection(db, "models"));
+  let found = false;
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    if (data.active) {
+      const option = document.createElement("option");
+      option.value = data.endpoint;
+      option.text = data.name + (data.selected ? " ⭐" : "");
+      selector.appendChild(option);
+      found = true;
+    }
+  });
+
+  if (!found) {
+    const option = document.createElement("option");
+    option.disabled = true;
+    option.selected = true;
+    option.text = "❌ No model available";
+    selector.appendChild(option);
+  }
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { firebaseConfig } from "./config.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const modelMenu = document.getElementById("model-menu");
+const modelInput = document.getElementById("model");
+const modelButton = document.getElementById("model-button");
+
+window.toggleModelMenu = function () {
+  modelMenu.style.display = modelMenu.style.display === "block" ? "none" : "block";
+};
+
+// Load model dari Firestore
+async function loadModels() {
+  const snapshot = await getDocs(collection(db, "models"));
+  modelMenu.innerHTML = ""; // Kosongkan dulu
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    if (data.active) {
+      const item = document.createElement("div");
+      item.textContent = data.name + (data.selected ? " ⭐" : "");
+      item.onclick = () => {
+        modelInput.value = data.endpoint;
+        modelButton.innerHTML = `🤖 ${data.name}`;
+        modelMenu.style.display = "none";
+      };
+      modelMenu.appendChild(item);
+    }
+  });
+}
+
+loadModels();
+</script>
+<!-- Sidebar Script -->
+<script>
+  window.toggleSidebar = function () {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+    const isOpen = sidebar.classList.toggle("active");
+    overlay.style.display = isOpen ? "block" : "none";
+  };
+</script>
+
+<!-- Main Logic Script -->
+<script type="module" src="script.js"></script>
+
 </body>
 </html>
