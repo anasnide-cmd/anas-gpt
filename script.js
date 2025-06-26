@@ -316,10 +316,11 @@ function isInWebView() {
 }
 
 function openInBrowser() {
-  const url = window.location.href;
-  window.open(url, "_blank");
+  const url = window.location.href.replace(/^https?:\/\//, '');
+  const intent = `intent://${url}#Intent;scheme=https;package=com.android.chrome;end`;
+  window.location.href = intent;
 }
 
 if (isInWebView()) {
   document.getElementById("webview-warning").classList.remove("hidden");
-          }
+}
