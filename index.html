@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+  
 <head>
+  
+  
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ANAS GPT</title>
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="script.js" defer></script>
+  
+  
 </head>
+
 <body>
 
   <!-- Notis Model Auto-Selected -->
@@ -14,6 +20,7 @@
 
   <!-- Header -->
   <header class="main-header">
+
     <div class="header-left">
       
       <button id="menu-toggle" class="menu-toggle">☰</button>
@@ -27,7 +34,10 @@
       <button id="login-btn" class="login-btn">Login</button>
       <button id="logout-btn" class="logout-btn hidden">Logout</button>
     </div>
+        
   </header>
+
+
 
   <!-- Sidebar Nav -->
 <nav id="nav-menu" class="nav-menu hidden">
@@ -37,6 +47,7 @@
     <li><a href="admin.html">🛠️ Admin</a></li>
     <li><a href="about.html">ℹ️ About</a></li>
     <li><a href="contact.html">📧 Contact</a></li>
+    <li><a href="https://anasnide-cmd.github.io/ANAS-NIDIR-E-COMMERCE/">E-COMMERCE</a></li>
   </ul>
 </nav>
   
@@ -46,8 +57,16 @@
   <div id="model-menu" class="dropdown-menu hidden"></div>
   <input type="hidden" id="model" />
 
+<div id="webview-warning" class="hidden" style="background: #ffcccc; color: #000; padding: 1rem; text-align: center;">
+  🚫 This app doesn’t work properly inside in-app browsers (e.g. Instagram or TikTok).
+  <br><br>
+  <a href="#" onclick="openInBrowser()" style="background: #000; color: #fff; padding: 10px 20px; display: inline-block; margin-top: 10px;">Open in Browser</a>
+</div>
+
   <!-- Chat Area -->
   <main>
+    
+    
     <div id="chat-container"></div>
     <div id="typing-indicator" class="hidden">Typing...</div>
 
@@ -61,7 +80,11 @@
       <input type="text" id="user-input" placeholder="Ask something..." disabled />
       <button id="send-btn">Send</button>
     </div>
+    
+    
   </main>
 
 </body>
+
+
 </html>
