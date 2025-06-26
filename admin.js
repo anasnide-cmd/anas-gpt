@@ -1,280 +1,325 @@
+// ✅ Firebase imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDoc, setDoc, onSnapshot, query, orderBy
+  getFirestore, getDocs, collection, doc, updateDoc, query, where, addDoc, serverTimestamp, deleteDoc, increment, orderBy
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import {
-  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+  getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 import { firebaseConfig } from "./config.js";
 
+// ✅ Init Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const timerDocRef = doc(db, "meta", "reset_timer");
-const modelCollection = collection(db, "models");
 
-// Login
-document.getElementById("google-login-btn").addEventListener("click", () => {
-  signInWithPopup(auth, provider).catch((err) => {
-    alert("❌ Login failed: " + err.message);
+// ✅ UI Elements
+const chatContainer = document.getElementById("chat-container");
+const userInput = document.getElementById("user-input");
+const typingIndicator = document.getElementById("typing-indicator");
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const modelMenu = document.getElementById("model-menu");
+const modelInput = document.getElementById("model");
+const modelButton = document.getElementById("model-button");
+const icon = document.getElementById("dropdown-icon");
+const modelNotice = document.getElementById("model-notice");
+const clearChatBtn = document.getElementById("clear-chat-btn");
+const menuToggle = document.getElementById("menu-toggle");
+const navMenu = document.getElementById("nav-menu");
+const sendBtn = document.getElementById("send-btn");
+
+let currentChatId = localStorage.getItem("chatId");
+
+// ✅ Chat memory
+let chatHistory = [{ role: "system", content: "You are ANAS GPT." }];
+
+// ✅ Send button
+sendBtn.addEventListener("click", () => {
+  if (!userInput.disabled) sendMessage();
+});
+
+userInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !userInput.disabled) sendMessage();
+});
+
+async function startNewChat() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const chatDoc = await addDoc(collection(db, "users", user.uid, "chats"), {
+    title: "New Chat",
+    createdAt: serverTimestamp()
+  });
+  currentChatId = chatDoc.id;
+  localStorage.setItem("chatId", currentChatId);
+}
+
+async function saveMessage(text, sender) {
+  const user = auth.currentUser;
+  if (!user || !currentChatId) return;
+  await addDoc(collection(db, "users", user.uid, "chats", currentChatId, "messages"), {
+    text,
+    sender,
+    timestamp: serverTimestamp()
+  });
+}
+
+async function loadChatHistory() {
+  const user = auth.currentUser;
+  if (!user || !currentChatId) return;
+  const q = query(collection(db, "users", user.uid, "chats", currentChatId, "messages"), orderBy("timestamp"));
+  const snapshot = await getDocs(q);
+  chatContainer.innerHTML = "";
+  chatHistory = [{ role: "system", content: "You are ANAS GPT." }];
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const role = data.sender === "bot" ? "assistant" : "user";
+    addMessage(data.text, data.sender, false);
+    chatHistory.push({ role, content: data.text });
+  });
+}
+
+function addMessage(text, sender = "user", save = true) {
+  const msg = document.createElement("div");
+  msg.className = `message ${sender}`;
+  msg.textContent = text;
+  chatContainer.appendChild(msg);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  if (save) saveMessage(text, sender);
+}
+
+function typeBotMessage(text) {
+  const msg = document.createElement("div");
+  msg.className = "message bot";
+  msg.textContent = "";
+  chatContainer.appendChild(msg);
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      msg.textContent += text[i++];
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    } else {
+      clearInterval(interval);
+    }
+  }, 20);
+  saveMessage(text, "bot");
+}
+
+loginBtn.addEventListener("click", () =>
+  signInWithPopup(auth, provider).catch(err => alert("Login failed: " + err.message))
+);
+
+logoutBtn.addEventListener("click", () => {
+  signOut(auth).then(() => {
+    localStorage.removeItem("chatId");
+    currentChatId = null;
+    chatContainer.innerHTML = "";
   });
 });
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    document.getElementById("login-section").style.display = "block";
-    document.getElementById("panel-section").style.display = "none";
-    return;
-  }
-
-  const adminSnap = await getDoc(doc(db, "admin", user.email));
-  if (adminSnap.exists() && adminSnap.data().active === true) {
-    document.getElementById("login-section").style.display = "none";
-    document.getElementById("panel-section").style.display = "block";
-    loadKeys();
-    setupModelListener();
-    startResetCountdownFromServer();
+  if (user) {
+    loginBtn.classList.add("hidden");
+    logoutBtn.classList.remove("hidden");
+    userInput.disabled = false;
+    userInput.placeholder = `Hi ${user.displayName}, ask anything...`;
+    if (!currentChatId) await startNewChat();
+    loadModels();
+    await loadChatHistory();
   } else {
-    alert("❌ Access denied. You are not an admin.");
-    signOut(auth);
+    loginBtn.classList.remove("hidden");
+    logoutBtn.classList.add("hidden");
+    userInput.disabled = true;
+    userInput.placeholder = "Please login to use ANAS GPT";
   }
 });
 
-window.logout = () => signOut(auth);
-
-window.showTab = function (id, event) {
-  document.querySelectorAll(".tab-section").forEach(tab => tab.classList.remove("active"));
-  document.querySelectorAll(".tab-btns button").forEach(btn => btn.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  event.target.classList.add("active");
-
-  if (id === "list-tab") loadKeys();
-  if (id === "model-tab") setupModelListener();
-  if (id === "chat-tab") loadUserChats();
-};
-
-window.addKey = async function () {
-  const input = document.getElementById("api-key-input");
-  const key = input.value.trim();
-  const status = document.getElementById("status");
-
-  if (!key.startsWith("sk-") && !key.startsWith("hf_")) {
-    status.textContent = "❌ Must start with sk- or hf_";
-    return;
+async function loadModels() {
+  const q = query(collection(db, "models"), where("active", "==", true));
+  const snapshot = await getDocs(q);
+  modelMenu.innerHTML = "";
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const div = document.createElement("div");
+    div.textContent = `${data.name}${data.selected ? " ⭐" : ""}`;
+    div.className = "model-option";
+    div.onclick = () => {
+      modelInput.value = data.endpoint;
+      document.getElementById("model-name").textContent = data.name;
+      modelMenu.classList.remove("show");
+      modelMenu.classList.add("hidden");
+      document.querySelectorAll('.model-option').forEach(el => el.classList.remove('active'));
+      div.classList.add('active');
+    };
+    modelMenu.appendChild(div);
+    if (data.selected && !modelInput.value) div.click();
+  });
+  if (!modelInput.value && modelMenu.children.length > 0) {
+    modelMenu.children[0].click();
+  } else if (!modelInput.value) {
+    addMessage("⚠️ No AI model is available at the moment.", "bot");
   }
+}
 
-  try {
-    await addDoc(collection(db, "api_keys"), {
-      value: key,
-      active: true,
-      failCount: 0
-    });
-    status.textContent = "✅ Key added!";
-    input.value = "";
-    loadKeys();
-  } catch (err) {
-    status.textContent = "❌ Failed to add key.";
+modelButton.addEventListener("click", () => {
+  modelMenu.classList.toggle("show");
+  modelMenu.classList.toggle("hidden");
+  if (icon)
+    icon.style.transform = modelMenu.classList.contains("show") ? "rotate(180deg)" : "rotate(0deg)";
+});
+
+document.addEventListener("click", (e) => {
+  const isInside = e.target.closest("#model-menu") || e.target.closest("#model-button");
+  if (!isInside) {
+    modelMenu.classList.remove("show");
+    modelMenu.classList.add("hidden");
+    if (icon) icon.style.transform = "rotate(0deg)";
   }
-};
+});
 
-async function loadKeys() {
-  const tbody = document.getElementById("key-table-body");
+async function fetchActiveKeys() {
   const snapshot = await getDocs(collection(db, "api_keys"));
-  let i = 1;
-  tbody.innerHTML = "";
-
+  const keys = [];
   snapshot.forEach(docSnap => {
     const data = docSnap.data();
-    if (!data || !data.value) return;
+    if (data.active && data.value && data.failCount < 3) {
+      keys.push({ id: docSnap.id, value: data.value });
+    }
+  });
+  return keys;
+}
 
-    const row = document.createElement("tr");
-    if (!data.active) row.classList.add("inactive");
-    row.innerHTML = `
-      <td>${i++}</td>
-      <td>${data.value.slice(0, 10)}...${data.value.slice(-5)}</td>
-      <td>${data.active ? "✅ Active" : "❌ Inactive"}</td>
-      <td>${data.failCount}</td>
-      <td><button onclick="toggleActive('${docSnap.id}', ${data.active})">Toggle</button></td>
-      <td><button onclick="deleteKey('${docSnap.id}')">🗑️</button></td>
-    `;
-    tbody.appendChild(row);
+async function incrementFailCount(docId) {
+  await updateDoc(doc(db, "api_keys", docId), {
+    failCount: increment(1)
   });
 }
 
-window.toggleActive = async function (docId, current) {
-  await updateDoc(doc(db, "api_keys", docId), { active: !current });
-  loadKeys();
-};
+async function sendMessage() {
+  const input = userInput.value.trim();
+  if (!input || userInput.disabled) return;
 
-window.deleteKey = async function (docId) {
-  if (confirm("Delete this key?")) {
-    await deleteDoc(doc(db, "api_keys", docId));
-    loadKeys();
-  }
-};
+  addMessage(input, "user");
+  chatHistory.push({ role: "user", content: input });
 
-window.resetFailCounts = async function () {
-  const snapshot = await getDocs(collection(db, "api_keys"));
-  for (const docSnap of snapshot.docs) {
-    await updateDoc(doc(db, "api_keys", docSnap.id), { failCount: 0 });
-  }
-  alert("✅ All failCounts have been reset.");
-  loadKeys();
-};
+  userInput.value = "";
+  userInput.disabled = true;
+  typingIndicator.classList.remove("hidden");
 
-async function startResetCountdownFromServer() {
-  try {
-    const now = Date.now();
-    const twelveHours = 12 * 60 * 60 * 1000;
-    const snap = await getDoc(timerDocRef);
-    let lastReset = snap.exists() ? snap.data().lastReset || 0 : 0;
-
-    if (now - lastReset >= twelveHours) {
-      const snapshot = await getDocs(collection(db, "api_keys"));
-      for (const docSnap of snapshot.docs) {
-        await updateDoc(doc(db, "api_keys", docSnap.id), { failCount: 0 });
+  let selectedModel = modelInput.value;
+  if (!selectedModel) {
+    const firstModelDiv = modelMenu.querySelector(".model-option");
+    if (firstModelDiv) {
+      firstModelDiv.click();
+      selectedModel = modelInput.value;
+      if (modelNotice) {
+        modelNotice.textContent = `🔔 Auto-selected model: ${firstModelDiv.textContent}`;
+        modelNotice.classList.add("show");
+        setTimeout(() => modelNotice.classList.remove("show"), 3000);
       }
-      await setDoc(timerDocRef, { lastReset: now });
-      lastReset = now;
     }
-
-    startCountdown(lastReset + twelveHours);
-  } catch (e) {
-    console.error("❌ Failed to set auto-reset:", e);
-  }
-}
-
-function startCountdown(targetTime) {
-  const countdown = document.getElementById("countdown");
-
-  function updateTimer() {
-    const now = Date.now();
-    const remaining = targetTime - now;
-
-    if (remaining <= 0) {
-      countdown.innerText = "🔁 Recently reset.";
-      return;
-    }
-
-    const hours = Math.floor(remaining / (1000 * 60 * 60));
-    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-    countdown.innerText = `${hours}h ${minutes}m ${seconds}s`;
   }
 
-  updateTimer();
-  setInterval(updateTimer, 1000);
-}
-
-// Model Management
-function setupModelListener() {
-  const q = query(modelCollection, orderBy("name"));
-  onSnapshot(q, (snapshot) => {
-    const tbody = document.getElementById("model-table-body");
-    tbody.innerHTML = "";
-    let i = 1;
-
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (!data) return;
-
-      const row = document.createElement("tr");
-      if (!data.active) row.classList.add("inactive");
-
-      row.innerHTML = `
-        <td>${i++}</td>
-        <td>${data.name}</td>
-        <td>${data.endpoint}</td>
-        <td>${data.active ? "✅ Active" : "❌ Inactive"}</td>
-        <td>${data.selected ? "⭐ Main" : `<button onclick="setModelActive('${docSnap.id}')">Set</button>`}</td>
-        <td><button onclick="toggleModel('${docSnap.id}', ${data.active})">Toggle</button></td>
-        <td><button onclick="deleteModel('${docSnap.id}')">🗑️</button></td>
-      `;
-      tbody.appendChild(row);
-    });
-  });
-}
-
-window.addModel = async function () {
-  const name = document.getElementById("model-name").value.trim();
-  const endpoint = document.getElementById("model-endpoint").value.trim();
-  const status = document.getElementById("model-status");
-
-  if (!name || !endpoint) {
-    status.textContent = "❌ Please enter both name and endpoint.";
+  const keys = await fetchActiveKeys();
+  if (!keys.length) {
+    typingIndicator.classList.add("hidden");
+    addMessage("❌ No active API keys available.", "bot");
+    userInput.disabled = false;
     return;
   }
 
-  try {
-    await addDoc(modelCollection, {
-      name,
-      endpoint,
-      active: true,
-      selected: false
-    });
-    status.textContent = "✅ Model added!";
-    document.getElementById("model-name").value = "";
-    document.getElementById("model-endpoint").value = "";
-  } catch (err) {
-    status.textContent = "❌ Failed to add model.";
+  for (let { id, value } of keys) {
+    try {
+      await new Promise(res => setTimeout(res, 300));
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${value}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: chatHistory,
+          max_tokens: 1000
+        })
+      });
+
+      const data = await res.json();
+      typingIndicator.classList.add("hidden");
+
+      if (!res.ok || !data?.choices?.[0]) throw new Error(data?.error?.message || "Invalid AI response.");
+
+      const aiReply = data.choices[0].message.content || "❌ No response.";
+      typeBotMessage(aiReply);
+      chatHistory.push({ role: "assistant", content: aiReply });
+
+      userInput.disabled = false;
+      return;
+
+    } catch (err) {
+      console.warn(`❌ Key failed: ${value} | ${err.message}`);
+      if (['quota', 'token', 'authorization'].some(keyword => err.message.includes(keyword))) {
+        await updateDoc(doc(db, "api_keys", id), { active: false });
+      } else {
+        await incrementFailCount(id);
+      }
+    }
   }
-};
 
-window.toggleModel = async function (docId, current) {
-  await updateDoc(doc(db, "models", docId), { active: !current });
-};
-
-window.deleteModel = async function (docId) {
-  if (confirm("Are you sure you want to delete this model?")) {
-    await deleteDoc(doc(db, "models", docId));
-  }
-};
-
-window.setModelActive = async function (docId) {
-  const snapshot = await getDocs(modelCollection);
-  for (const docSnap of snapshot.docs) {
-    await updateDoc(doc(db, "models", docSnap.id), { selected: false });
-  }
-  await updateDoc(doc(db, "models", docId), { selected: true });
-};
-
-// View Chats
-async function loadUserChats() {
-  const chatList = document.getElementById("chat-list");
-  const chatMessages = document.getElementById("chat-messages");
-  chatList.innerHTML = "<p>Loading user chats...</p>";
-  chatMessages.innerHTML = "";
-
-  const usersSnapshot = await getDocs(collection(db, "users"));
-  chatList.innerHTML = "";
-
-  usersSnapshot.forEach(async (userDoc) => {
-    const userId = userDoc.id;
-    const chatsCol = collection(db, "users", userId, "chats");
-    const chatsSnapshot = await getDocs(chatsCol);
-
-    chatsSnapshot.forEach(chatDoc => {
-      const chatId = chatDoc.id;
-      const chatBtn = document.createElement("button");
-      chatBtn.style.marginBottom = "10px";
-      chatBtn.textContent = `User: ${userId} | Chat: ${chatId}`;
-      chatBtn.onclick = () => loadChatMessages(userId, chatId);
-      chatList.appendChild(chatBtn);
-    });
-  });
+  typingIndicator.classList.add("hidden");
+  addMessage("❌ All keys failed. Try again later.", "bot");
+  userInput.disabled = false;
 }
 
-async function loadChatMessages(userId, chatId) {
-  const chatMessages = document.getElementById("chat-messages");
-  chatMessages.innerHTML = `<h3>💬 Messages from ${userId} | Chat: ${chatId}</h3>`;
-  const msgs = collection(db, "users", userId, "chats", chatId, "messages");
-  const msgSnapshot = await getDocs(msgs);
+clearChatBtn.addEventListener("click", () => {
+  if (confirm("Padam semua chat?")) {
+    clearChatHistory();
+  }
+});
 
-  msgSnapshot.forEach(docSnap => {
-    const { sender, text, timestamp } = docSnap.data();
-    const div = document.createElement("div");
-    div.innerHTML = `<p><b>${sender}</b>: ${text}<br/><small>${timestamp?.toDate?.().toLocaleString() || ''}</small></p>`;
-    chatMessages.appendChild(div);
-  });
+async function clearChatHistory() {
+  const user = auth.currentUser;
+  if (!user || !currentChatId) return;
+  const chatRef = collection(db, "users", user.uid, "chats", currentChatId, "messages");
+  const snapshot = await getDocs(chatRef);
+  const deletions = snapshot.docs.map(doc => deleteDoc(doc.ref));
+  await Promise.all(deletions);
+  chatContainer.innerHTML = "";
+  chatHistory = [{ role: "system", content: "You are ANAS GPT." }];
 }
+
+menuToggle.addEventListener("click", (e) => {
+  e.stopPropagation();
+  navMenu.classList.toggle('show');
+  navMenu.classList.toggle('hidden');
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest("#nav-menu") && !e.target.closest("#menu-toggle")) {
+    navMenu.classList.remove('show');
+    navMenu.classList.add('hidden');
+  }
+});
+
+function isInWebView() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  return (
+    ua.includes("Instagram") ||
+    ua.includes("FBAN") ||
+    ua.includes("FBAV") ||
+    ua.includes("TikTok") ||
+    ua.includes("Snapchat") ||
+    ua.includes("SPCK") ||
+    ua.includes("wv") || (ua.includes("Android") && !ua.includes("Chrome"))
+  );
+}
+
+function openInBrowser() {
+  const url = window.location.href;
+  window.open(url, "_blank");
+}
+
+if (isInWebView()) {
+  document.getElementById("webview-warning").classList.remove("hidden");
+                                                   }
