@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-  
 <head>
-  
-  
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ANAS GPT</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://www.google.com/recaptcha/api.js?render=6Lf1-24rAAAAAJjYx-lihGHh70Jl7qcGiWyUvFWR"></script>
   <script type="module" src="script.js" defer></script>
-  
-  
+  <script type="module" src="memory.js" defer></script>
 </head>
 
 <body>
@@ -20,12 +17,9 @@
 
   <!-- Header -->
   <header class="main-header">
-
     <div class="header-left">
-      
       <button id="menu-toggle" class="menu-toggle">☰</button>
       <h1 id="model-button">
-        
         <span style="font-size: 1.2rem;">ANAS GPT</span> <span id="dropdown-icon">▼</span><br>
         <small id="model-name"></small>
       </h1>
@@ -34,57 +28,109 @@
       <button id="login-btn" class="login-btn">Login</button>
       <button id="logout-btn" class="logout-btn hidden">Logout</button>
     </div>
-        
   </header>
 
-
-
   <!-- Sidebar Nav -->
-<nav id="nav-menu" class="nav-menu hidden">
-  <ul>
-    <li><a href="index.html">🏠 Home</a></li>
-    <li><a href="chats.html">📂 Chat History</a></li>
-    <li><a href="admin.html">🛠️ Admin</a></li>
-    <li><a href="about.html">ℹ️ About</a></li>
-    <li><a href="contact.html">📧 Contact</a></li>
-    <li><a href="https://anasnide-cmd.github.io/ANAS-NIDIR-E-COMMERCE/">E-COMMERCE</a></li>
-  </ul>
-</nav>
-  
- 
+  <nav id="nav-menu" class="nav-menu hidden">
+    <ul>
+      <li><a href="index.html">🏠 Home</a></li>
+      <li><a href="chats.html">📂 Chat History</a></li>
+      <li><a href="#" onclick="openMemoryModal()">🧠 Memory</a></li>
+      <li><a href="admin.html">🛠️ Admin</a></li>
+      <li><a href="about.html">ℹ️ About</a></li>
+      <li><a href="contact.html">📧 Contact</a></li>
+      <li><a href="https://anasnide-cmd.github.io/ANAS-NIDIR-E-COMMERCE/">🛍️ E-Commerce</a></li>
+    </ul>
+  </nav>
 
   <!-- Model Dropdown -->
   <div id="model-menu" class="dropdown-menu hidden"></div>
   <input type="hidden" id="model" />
 
-<div id="webview-warning" class="hidden" style="background: #ffcccc; color: #000; padding: 1rem; text-align: center;">
-  🚫 This app doesn’t work properly inside in-app browsers (e.g. Instagram or TikTok).
-  <br><br>
-  <a href="#" onclick="openInBrowser()" style="background: #000; color: #fff; padding: 10px 20px; display: inline-block; margin-top: 10px;">Open in Browser</a>
-</div>
+  <!-- Webview Warning -->
+  <div id="webview-warning" class="hidden" style="background: #ffcccc; color: #000; padding: 1rem; text-align: center;">
+    🚫 This app doesn’t work properly inside in-app browsers (e.g. Instagram or TikTok).
+    <br><br>
+    <a href="#" onclick="openInBrowser()" style="background: #000; color: #fff; padding: 10px 20px; display: inline-block; margin-top: 10px;">Open in Browser</a>
+  </div>
 
   <!-- Chat Area -->
   <main>
-    
-    
     <div id="chat-container"></div>
     <div id="typing-indicator" class="hidden">Typing...</div>
-
-    <!-- Clear Chat Button -->
     <button id="clear-chat-btn" class="logout-btn">🗑️ Clear Chat</button>
-    <!-- Button to open chat history -->
-
 
     <!-- Input Area -->
     <div id="input-area">
-      <input type="text" id="user-input" placeholder="Ask something..." disabled />
+      <input type="text" id="user-input" placeholder="Ask something..." disabled autocomplete="off" />
       <button id="send-btn">Send</button>
     </div>
-    
-    
   </main>
+  
+  <!-- Memory Modal -->
+<div id="memory-modal" class="hidden" style="position: fixed; bottom: 10%; left: 50%; transform: translateX(-50%);
+  background: #111; padding: 1rem; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  z-index: 999; width: 90%; max-width: 500px;">
+  
+  <h2 style="color: var(--primary);">🧠 Personalized Memory</h2>
+  <div id="memory-list" style="margin-bottom: 10px;"></div>
+  <input id="new-memory-key" placeholder="Key (e.g. name)" autocomplete="off" />
+  <input id="new-memory-value" placeholder="Value (e.g. Anas)" autocomplete="off" />
+  <br><br>
+  <button onclick="addMemory()" style="background: var(--primary); color: black; margin-right: 10px;">➕ Save</button>
+  <button onclick="closeMemory()" style="background: #444; color: white;">❌ Close</button>
+</div>
+
+
+  <!-- ✅ Memory Modal Panel -->
+  <
+  </div>
+
+  <!-- ✅ Global Script -->
+  <script>
+    function openInBrowser() {
+      window.open(window.location.href, "_blank");
+    }
+
+    function isInAppBrowser() {
+      const ua = navigator.userAgent.toLowerCase();
+      return ua.includes("instagram") || ua.includes("fbav") || ua.includes("tiktok");
+    }
+
+    if (isInAppBrowser()) {
+      document.getElementById("webview-warning").classList.remove("hidden");
+    }
+
+    function openMemoryModal() {
+      document.getElementById("memory-modal").classList.remove("hidden");
+    }
+
+    function closeModal() {
+      document.getElementById("memory-modal").classList.add("hidden");
+    }
+  </script>
+  <script>
+  function showMemory() {
+    document.getElementById("memory-modal").classList.remove("hidden");
+  }
+  
+  function closeMemory() {
+    document.getElementById("memory-modal").classList.add("hidden");
+  }
+  
+  // Gantikan menu link "Memory"
+  function showTab(id, e) {
+    if (id === "memory-tab") {
+      showMemory(); // ganti jadi popup
+    } else {
+      document.querySelectorAll(".tab-section").forEach(el => el.classList.add("hidden"));
+      document.getElementById(id)?.classList.remove("hidden");
+    }
+    if (e) e.preventDefault();
+  }
+</script>
+
+
 
 </body>
-
-
 </html>
