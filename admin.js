@@ -277,4 +277,4 @@ async function loadChatMessages(userId, chatId) {
     div.innerHTML = `<p><b>${sender}</b>: ${text}<br/><small>${timestamp?.toDate?.().toLocaleString() || ''}</small></p>`;
     chatMessages.appendChild(div);
   });
-        }
+}
