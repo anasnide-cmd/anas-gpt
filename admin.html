@@ -5,21 +5,103 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel - ANAS GPT</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #111; color: white; }
+    input, button { padding: 10px; margin-top: 10px; }
+    input { width: 300px; }
+    button { background: #007BFF; color: white; border: none; cursor: pointer; }
+    .tab-btns button.active { background: #555; }
+    .tab-section { display: none; margin-top: 20px; }
+    .tab-section.active { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; color: white; }
+    th, td { padding: 8px; border: 1px solid #444; text-align: center; }
+    .inactive { background-color: #550000; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>🔐 ANAS GPT - Admin Panel</h1>
-    <p>Tambah API Key OpenRouter ke Firebase</p>
-  </header>
 
-  <main>
-    <div id="admin-form">
-      <input type="text" id="api-key-input" placeholder="Masukkan API Key (cth: sk-or-xxxxx...)" />
-      <button onclick="addKey()">Tambah Key</button>
+  <!-- LOGIN -->
+  <div id="login-section">
+    <h2>🔐 Admin Login</h2>
+    <button id="google-login-btn">Login with Google</button>
+  </div>
+
+  <!-- PANEL -->
+  <div id="panel-section" style="display: none;">
+    <button onclick="logout()">Logout</button>
+    <h1>🛠️ ANAS GPT Admin Panel</h1>
+    <p id="reset-timer" style="margin-bottom: 10px; font-weight: bold;">
+      ⏳ Time until auto reset: <span id="countdown"></span>
+    </p>
+
+    <div class="tab-btns">
+      <button class="active" onclick="showTab('add-tab', event)">Add API Key</button>
+      <button onclick="showTab('list-tab', event)">List Keys</button>
+      <button onclick="showTab('model-tab', event)">🧠 Manage Models</button>
+      <button onclick="showTab('chat-tab', event)">📨 View Chats</button>
+    </div>
+
+    <!-- ADD KEY -->
+    <div id="add-tab" class="tab-section active">
+      <h2>➕ Add API Key</h2>
+      <input type="text" id="api-key-input" placeholder="sk-xxxx or hf_xxx..." />
+      <button onclick="addKey()">Add</button>
       <p id="status"></p>
     </div>
-  </main>
 
+    <!-- LIST KEYS -->
+    <div id="list-tab" class="tab-section">
+      <h2>📋 Key List</h2>
+      <button onclick="resetFailCounts()">Reset All FailCounts</button>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Key</th>
+            <th>Status</th>
+            <th>Fail</th>
+            <th>Toggle</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody id="key-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- MODEL MANAGEMENT -->
+    <div id="model-tab" class="tab-section">
+      <h2>🧠 AI Model Management</h2>
+      <div style="margin-bottom: 10px;">
+        <input type="text" id="model-name" placeholder="Model name (e.g., DeepSeek)" />
+        <input type="text" id="model-endpoint" placeholder="Endpoint (e.g., deepseek-ai/deepseek)" />
+        <button onclick="addModel()">Add Model</button>
+        <p id="model-status" style="margin-top: 5px; font-weight: bold;"></p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Endpoint</th>
+            <th>Status</th>
+            <th>Selected</th>
+            <th>Toggle</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody id="model-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- CHAT VIEWER -->
+    <div id="chat-tab" class="tab-section">
+      <h2>📨 User Chats</h2>
+      <div id="chat-list" style="margin-bottom: 20px;"></div>
+      <div id="chat-messages"></div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
   <script type="module" src="admin.js"></script>
 </body>
 </html>
