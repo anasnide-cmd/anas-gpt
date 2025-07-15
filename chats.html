@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <title>Chat History - ANAS GPT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="View and manage your previous AI chats with ANAS GPT. Rename, delete, or start a new conversation.">
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="chats.js" defer></script>
   <style>
     body {
       background: #111;
       color: #fff;
-      font-family: sans-serif;
+      font-family: 'Poppins', sans-serif;
       padding: 20px;
     }
 
@@ -22,7 +23,7 @@
 
     .new-chat-btn {
       display: block;
-      margin: 0 auto 30px;
+      margin: 0 auto 20px;
       padding: 10px 20px;
       background: #00ffc3;
       color: #000;
@@ -30,6 +31,11 @@
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .new-chat-btn:hover {
+      background: #00e6b0;
     }
 
     .chat-history-list {
@@ -55,6 +61,7 @@
 
     .chat-item span {
       cursor: pointer;
+      font-weight: 500;
     }
 
     .actions button {
@@ -64,18 +71,23 @@
       font-size: 16px;
       cursor: pointer;
       margin-left: 8px;
+      transition: color 0.2s;
     }
 
     .actions button:hover {
+      color: #00ffc3;
+    }
+
+    .actions button:last-child:hover {
       color: #ff4c4c;
     }
   </style>
-  
 </head>
 
 <body>
   <h1>🗂️ Your Chats</h1>
+  <button class="new-chat-btn" onclick="window.location.href='index.html'">← Back to Chat</button>
   <button class="new-chat-btn" onclick="startNewChat()">➕ New Chat</button>
-  <div id="chat-list" class="chat-history-list"></div>
+  <div id="chat-list" class="chat-history-list">Loading...</div>
 </body>
 </html>
